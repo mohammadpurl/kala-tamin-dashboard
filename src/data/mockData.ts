@@ -1,3 +1,4 @@
+
 import { Product, Order, Address, User, ShippingMethod, ShippingZone, ProductStats, SalesData, OrderStatus } from "../types";
 
 // Generate mock products
@@ -153,7 +154,7 @@ export const orders: Order[] = [
 ];
 
 // Export Order type from types for other components to use
-export type { Order, OrderStatus };
+export type { Order, OrderStatus, Product };
 
 // Generate mock addresses
 export const addresses: Address[] = [
