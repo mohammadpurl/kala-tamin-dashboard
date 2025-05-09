@@ -12,6 +12,8 @@ export const addresses: Address[] = [
     postalCode: "1234567890",
     isWarehouse: false,
     isDefault: true,
+    latitude: 35.7219,
+    longitude: 51.3347,
   },
   {
     id: "addr2",
@@ -22,6 +24,8 @@ export const addresses: Address[] = [
     postalCode: "8765432109",
     isWarehouse: true,
     isDefault: true,
+    latitude: 35.6892,
+    longitude: 51.3890,
   },
   {
     id: "addr3",
@@ -32,5 +36,7 @@ export const addresses: Address[] = [
     postalCode: "2345678901",
     isWarehouse: true,
     isDefault: false,
+    latitude: 36.2605,
+    longitude: 59.6168,
   },
 ];

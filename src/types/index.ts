@@ -45,6 +45,8 @@ export interface Address {
   postalCode: string;
   isWarehouse: boolean;
   isDefault: boolean;
+  latitude?: number;
+  longitude?: number;
 }
 
 // User types
