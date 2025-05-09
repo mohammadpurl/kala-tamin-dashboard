@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, LineChart, ResponsiveContainer, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 import { ArrowUp, Package, ShoppingCart, DollarSign, TrendingUp, Users } from 'lucide-react';
-import { salesData, productStats } from '@/data/mockData';
+import { salesData, productStats } from '@/data';
 import { Button } from "@/components/ui/button";
 
 const Dashboard = () => {
