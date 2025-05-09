@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,8 +17,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 const formSchema = z.object({
   name: z.string().min(2, { message: "نام باید حداقل ۲ حرف باشد" }),
   description: z.string().optional(),
-  price: z.string().transform((val) => Number(val)),
-  estimatedDeliveryDays: z.string().transform((val) => Number(val)),
+  price: z.coerce.number().nonnegative({ message: "قیمت باید عدد مثبت باشد" }),
+  estimatedDeliveryDays: z.coerce.number().int().positive({ message: "زمان تحویل باید عدد صحیح مثبت باشد" }),
   isSupplierDelivery: z.boolean().default(false),
 });
 
