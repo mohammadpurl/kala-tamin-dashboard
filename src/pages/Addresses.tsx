@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -79,12 +78,14 @@ const Addresses = () => {
     setShowMapConfig(false);
   };
 
-  const handleLocationSelect = (location: GeoLocation & { address: string }) => {
-    setSelectedLocation({
+  const handleLocationSelect = (location: { lat: number; lng: number; address: string }) => {
+    const newLocation: GeoLocation = {
       lat: location.lat,
       lng: location.lng,
       formattedAddress: location.address
-    });
+    };
+    
+    setSelectedLocation(newLocation);
     
     form.setValue("location", {
       lat: location.lat,
@@ -127,7 +128,11 @@ const Addresses = () => {
       postalCode: data.postalCode,
       isWarehouse: data.isWarehouse,
       isDefault: data.isDefault,
-      location: data.location
+      location: data.location ? {
+        lat: data.location.lat || 0,
+        lng: data.location.lng || 0,
+        formattedAddress: data.location.formattedAddress
+      } : undefined
     };
 
     setAddressesList([...addressesList, newAddress]);

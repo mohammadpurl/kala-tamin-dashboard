@@ -1,7 +1,8 @@
 
 import React, { useState, useCallback, useRef } from 'react';
 import { GoogleMap, Marker, useJsApiLoader } from '@react-google-maps/api';
-import Geocode from 'react-geocode';
+import * as Geocode from 'react-geocode';
+import { GeoLocation } from '@/types';
 
 const containerStyle = {
   width: '100%',
@@ -17,7 +18,7 @@ const defaultCenter = {
 interface GoogleMapPickerProps {
   apiKey: string;
   onLocationSelect: (location: { lat: number; lng: number; address: string }) => void;
-  initialLocation?: { lat: number; lng: number };
+  initialLocation?: GeoLocation;
 }
 
 const GoogleMapPicker: React.FC<GoogleMapPickerProps> = ({ apiKey, onLocationSelect, initialLocation }) => {
@@ -33,7 +34,10 @@ const GoogleMapPicker: React.FC<GoogleMapPickerProps> = ({ apiKey, onLocationSel
     googleMapsApiKey: apiKey
   });
 
-  const [markerPosition, setMarkerPosition] = useState(initialLocation || defaultCenter);
+  const [markerPosition, setMarkerPosition] = useState<google.maps.LatLngLiteral>(
+    initialLocation ? { lat: initialLocation.lat, lng: initialLocation.lng } : defaultCenter
+  );
+  
   const mapRef = useRef<google.maps.Map | null>(null);
 
   const onLoad = useCallback((map: google.maps.Map) => {
@@ -70,7 +74,7 @@ const GoogleMapPicker: React.FC<GoogleMapPickerProps> = ({ apiKey, onLocationSel
     <div className="rounded overflow-hidden border border-input">
       <GoogleMap
         mapContainerStyle={containerStyle}
-        center={initialLocation || defaultCenter}
+        center={initialLocation ? { lat: initialLocation.lat, lng: initialLocation.lng } : defaultCenter}
         zoom={14}
         onClick={handleMapClick}
         onLoad={onLoad}
