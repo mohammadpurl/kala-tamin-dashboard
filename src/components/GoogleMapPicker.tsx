@@ -24,7 +24,7 @@ interface GoogleMapPickerProps {
 const GoogleMapPicker: React.FC<GoogleMapPickerProps> = ({ apiKey, onLocationSelect, initialLocation }) => {
   // تنظیم API کلید برای Geocoding
   React.useEffect(() => {
-    Geocode.setApiKey(apiKey);
+    Geocode.setKey(apiKey);
     Geocode.setLanguage("fa");
     Geocode.setRegion("ir");
   }, [apiKey]);
