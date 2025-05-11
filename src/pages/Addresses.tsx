@@ -8,12 +8,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { Search, Plus, Edit, Trash2, MapPin, Home, Warehouse } from "lucide-react";
+import { Search, Plus, Edit, Trash2, MapPin, Home, Warehouse, Map as MapIcon } from "lucide-react";
 import { addresses } from "@/data/mockData";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Badge } from "@/components/ui/badge";
+import GoogleMapPicker from "@/components/GoogleMapPicker";
+import GoogleMapConfig from "@/components/GoogleMapConfig";
+import { Address, GeoLocation } from "@/types";
+import { Separator } from "@/components/ui/separator";
 
 const addressFormSchema = z.object({
   title: z.string().min(2, { message: "عنوان آدرس باید حداقل ۲ حرف باشد" }),
@@ -23,15 +27,23 @@ const addressFormSchema = z.object({
   postalCode: z.string().min(10, { message: "کد پستی باید ۱۰ رقم باشد" }).max(10),
   isWarehouse: z.boolean().default(false),
   isDefault: z.boolean().default(false),
+  location: z.object({
+    lat: z.number().optional(),
+    lng: z.number().optional(),
+    formattedAddress: z.string().optional()
+  }).optional()
 });
 
 type AddressFormData = z.infer<typeof addressFormSchema>;
 
 const Addresses = () => {
-  const [addressesList, setAddressesList] = useState(addresses);
+  const [addressesList, setAddressesList] = useState<Address[]>(addresses);
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddingAddress, setIsAddingAddress] = useState(false);
   const [activeTab, setActiveTab] = useState('all');
+  const [googleMapsApiKey, setGoogleMapsApiKey] = useState<string>("");
+  const [selectedLocation, setSelectedLocation] = useState<GeoLocation | null>(null);
+  const [showMapConfig, setShowMapConfig] = useState<boolean>(false);
   
   const { toast } = useToast();
   
@@ -45,8 +57,50 @@ const Addresses = () => {
       postalCode: "",
       isWarehouse: false,
       isDefault: false,
+      location: undefined
     },
   });
+
+  React.useEffect(() => {
+    // اگر آدرسی از نقشه انتخاب شده، فیلدهای فرم را به‌روزرسانی کنیم
+    if (selectedLocation?.formattedAddress) {
+      form.setValue("street", selectedLocation.formattedAddress || "");
+      
+      // بررسی وجود API key در localStorage
+      const savedApiKey = localStorage.getItem('google_maps_api_key');
+      if (savedApiKey) {
+        setGoogleMapsApiKey(savedApiKey);
+      }
+    }
+  }, [selectedLocation, form]);
+
+  const handleApiKeySet = (apiKey: string) => {
+    setGoogleMapsApiKey(apiKey);
+    setShowMapConfig(false);
+  };
+
+  const handleLocationSelect = (location: GeoLocation & { address: string }) => {
+    setSelectedLocation({
+      lat: location.lat,
+      lng: location.lng,
+      formattedAddress: location.address
+    });
+    
+    form.setValue("location", {
+      lat: location.lat,
+      lng: location.lng,
+      formattedAddress: location.address
+    });
+    
+    if (location.address) {
+      form.setValue("street", location.address);
+    }
+    
+    toast({
+      title: "موقعیت انتخاب شد",
+      description: location.address || "آدرس انتخاب شد.",
+    });
+  };
 
   const onSubmitAddress = (data: AddressFormData) => {
     // اگر آدرس پیش‌فرض باشد، آدرس‌های پیش‌فرض قبلی را آپدیت کنیم
@@ -64,7 +118,7 @@ const Addresses = () => {
       }
     }
 
-    const newAddress = {
+    const newAddress: Address = {
       id: `addr_${Date.now()}`,
       title: data.title,
       street: data.street,
@@ -73,6 +127,7 @@ const Addresses = () => {
       postalCode: data.postalCode,
       isWarehouse: data.isWarehouse,
       isDefault: data.isDefault,
+      location: data.location
     };
 
     setAddressesList([...addressesList, newAddress]);
@@ -84,6 +139,7 @@ const Addresses = () => {
     });
     
     form.reset();
+    setSelectedLocation(null);
   };
 
   const handleDeleteAddress = (id: string) => {
@@ -134,6 +190,28 @@ const Addresses = () => {
     return matchesSearch;
   });
 
+  const viewOnMap = (address: Address) => {
+    if (!googleMapsApiKey) {
+      setShowMapConfig(true);
+      return;
+    }
+
+    if (!address.location) {
+      toast({
+        title: "موقعیت مکانی موجود نیست",
+        description: "این آدرس دارای موقعیت مکانی نیست.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // اینجا میتوانید یک دیالوگ برای نمایش موقعیت آدرس روی نقشه باز کنید
+    window.open(
+      `https://www.google.com/maps/search/?api=1&query=${address.location.lat},${address.location.lng}`,
+      '_blank'
+    );
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -146,10 +224,10 @@ const Addresses = () => {
                 افزودن آدرس جدید
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[550px] rtl">
+            <DialogContent className="sm:max-w-[650px] rtl">
               <DialogHeader>
                 <DialogTitle>افزودن آدرس جدید</DialogTitle>
-                <DialogDescription>مشخصات آدرس جدید را وارد کنید.</DialogDescription>
+                <DialogDescription>مشخصات آدرس جدید را وارد کنید یا از روی نقشه انتخاب کنید.</DialogDescription>
               </DialogHeader>
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmitAddress)} className="space-y-4">
@@ -166,6 +244,39 @@ const Addresses = () => {
                       </FormItem>
                     )}
                   />
+                  
+                  {!googleMapsApiKey && (
+                    <div className="bg-muted/30 p-4 rounded-md border border-muted">
+                      <div className="flex items-center gap-4 mb-2">
+                        <MapIcon size={20} />
+                        <p className="font-medium">انتخاب آدرس از روی نقشه</p>
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-4">برای انتخاب آدرس از روی نقشه، ابتدا باید کلید API گوگل مپ را تنظیم کنید.</p>
+                      <Button variant="outline" onClick={() => setShowMapConfig(true)}>تنظیم کلید API</Button>
+                    </div>
+                  )}
+                  
+                  {googleMapsApiKey && (
+                    <>
+                      <div className="bg-muted/30 p-4 rounded-md border border-muted">
+                        <p className="font-medium mb-2">انتخاب آدرس از روی نقشه</p>
+                        <p className="text-sm text-muted-foreground mb-4">روی نقشه کلیک کنید تا موقعیت انتخاب شود.</p>
+                        <GoogleMapPicker 
+                          apiKey={googleMapsApiKey} 
+                          onLocationSelect={handleLocationSelect} 
+                          initialLocation={selectedLocation || undefined}
+                        />
+                        {selectedLocation && (
+                          <div className="mt-3 text-xs text-muted-foreground">
+                            <p>آدرس: {selectedLocation.formattedAddress}</p>
+                            <p>مختصات: {selectedLocation.lat.toFixed(6)}, {selectedLocation.lng.toFixed(6)}</p>
+                          </div>
+                        )}
+                      </div>
+                      
+                      <Separator className="my-4" />
+                    </>
+                  )}
                   
                   <FormField
                     control={form.control}
@@ -277,6 +388,12 @@ const Addresses = () => {
           </Dialog>
         </div>
       </div>
+      
+      <Dialog open={showMapConfig} onOpenChange={setShowMapConfig}>
+        <DialogContent className="sm:max-w-[550px]">
+          <GoogleMapConfig onApiKeySet={handleApiKeySet} />
+        </DialogContent>
+      </Dialog>
 
       <Card>
         <CardHeader className="pb-3">
@@ -349,6 +466,16 @@ const Addresses = () => {
                           <Button variant="ghost" size="icon">
                             <Edit className="h-4 w-4" />
                           </Button>
+                          {address.location && (
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              onClick={() => viewOnMap(address)}
+                              title="مشاهده روی نقشه"
+                            >
+                              <MapIcon className="h-4 w-4" />
+                            </Button>
+                          )}
                           {!address.isDefault && (
                             <Button 
                               variant="ghost" 
