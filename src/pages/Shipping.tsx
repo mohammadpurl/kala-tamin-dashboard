@@ -9,7 +9,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Search, Plus, Edit, Trash2, MapPin, TruckIcon } from "lucide-react";
-import { shippingMethods, shippingZones } from "@/data";
+import { shippingMethods, shippingZones } from "@/data/mockData";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -39,8 +39,8 @@ const Shipping = () => {
     defaultValues: {
       name: "",
       description: "",
-      price: 0,
-      estimatedDeliveryDays: 1,
+      price: "",
+      estimatedDeliveryDays: "",
       isSupplierDelivery: false,
     },
   });

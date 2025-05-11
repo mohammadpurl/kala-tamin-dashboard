@@ -9,12 +9,11 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Search, Plus, Edit, Trash2, MapPin, Home, Warehouse } from "lucide-react";
-import { addresses } from "@/data"; // به‌روزرسانی ایمپورت
+import { addresses } from "@/data/mockData";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Badge } from "@/components/ui/badge";
-import AddressMap from '@/components/AddressMap';
 
 const addressFormSchema = z.object({
   title: z.string().min(2, { message: "عنوان آدرس باید حداقل ۲ حرف باشد" }),
@@ -24,8 +23,6 @@ const addressFormSchema = z.object({
   postalCode: z.string().min(10, { message: "کد پستی باید ۱۰ رقم باشد" }).max(10),
   isWarehouse: z.boolean().default(false),
   isDefault: z.boolean().default(false),
-  latitude: z.number().optional(),
-  longitude: z.number().optional(),
 });
 
 type AddressFormData = z.infer<typeof addressFormSchema>;
@@ -35,7 +32,6 @@ const Addresses = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddingAddress, setIsAddingAddress] = useState(false);
   const [activeTab, setActiveTab] = useState('all');
-  const [selectedLocation, setSelectedLocation] = useState<{ lat?: number; lng?: number; address?: string }>({});
   
   const { toast } = useToast();
   
@@ -51,20 +47,6 @@ const Addresses = () => {
       isDefault: false,
     },
   });
-
-  // تابع برای انتخاب موقعیت از نقشه
-  const handleSelectLocation = (location: { lat: number; lng: number; address?: string }) => {
-    setSelectedLocation(location);
-    
-    // اگر آدرسی از نقشه دریافت شده باشد، آن را در فرم قرار می‌دهیم
-    if (location.address) {
-      form.setValue('street', location.address);
-    }
-    
-    // ذخیره مختصات جغرافیایی
-    form.setValue('latitude', location.lat);
-    form.setValue('longitude', location.lng);
-  };
 
   const onSubmitAddress = (data: AddressFormData) => {
     // اگر آدرس پیش‌فرض باشد، آدرس‌های پیش‌فرض قبلی را آپدیت کنیم
@@ -91,8 +73,6 @@ const Addresses = () => {
       postalCode: data.postalCode,
       isWarehouse: data.isWarehouse,
       isDefault: data.isDefault,
-      latitude: data.latitude,
-      longitude: data.longitude,
     };
 
     setAddressesList([...addressesList, newAddress]);
@@ -104,7 +84,6 @@ const Addresses = () => {
     });
     
     form.reset();
-    setSelectedLocation({});
   };
 
   const handleDeleteAddress = (id: string) => {
@@ -167,135 +146,126 @@ const Addresses = () => {
                 افزودن آدرس جدید
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[650px] rtl">
+            <DialogContent className="sm:max-w-[550px] rtl">
               <DialogHeader>
                 <DialogTitle>افزودن آدرس جدید</DialogTitle>
-                <DialogDescription>مشخصات آدرس جدید را وارد کنید یا از نقشه انتخاب نمایید.</DialogDescription>
+                <DialogDescription>مشخصات آدرس جدید را وارد کنید.</DialogDescription>
               </DialogHeader>
               <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmitAddress)} className="space-y-6">
-                  {/* بخش نقشه */}
-                  <div className="border rounded-md p-4 bg-muted/10">
-                    <h3 className="text-sm font-medium mb-2">انتخاب موقعیت از روی نقشه</h3>
-                    <AddressMap onSelectLocation={handleSelectLocation} />
+                <form onSubmit={form.handleSubmit(onSubmitAddress)} className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="title"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>عنوان آدرس</FormLabel>
+                        <FormControl>
+                          <Input placeholder="مثال: دفتر مرکزی" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="street"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>آدرس خیابان</FormLabel>
+                        <FormControl>
+                          <Input placeholder="خیابان، کوچه، پلاک" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="city"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>شهر</FormLabel>
+                          <FormControl>
+                            <Input placeholder="نام شهر" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="state"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>استان</FormLabel>
+                          <FormControl>
+                            <Input placeholder="نام استان" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </div>
                   
-                  {/* فرم اطلاعات */}
-                  <div className="space-y-4">
-                    <FormField
-                      control={form.control}
-                      name="title"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>عنوان آدرس</FormLabel>
-                          <FormControl>
-                            <Input placeholder="مثال: دفتر مرکزی" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="street"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>آدرس خیابان</FormLabel>
-                          <FormControl>
-                            <Input placeholder="خیابان، کوچه، پلاک" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <div className="grid grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="city"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>شهر</FormLabel>
-                            <FormControl>
-                              <Input placeholder="نام شهر" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name="state"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>استان</FormLabel>
-                            <FormControl>
-                              <Input placeholder="نام استان" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                    
-                    <FormField
-                      control={form.control}
-                      name="postalCode"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>کد پستی</FormLabel>
-                          <FormControl>
-                            <Input placeholder="کد پستی ۱۰ رقمی" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="isWarehouse"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 space-x-reverse">
-                          <FormControl>
-                            <Checkbox 
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                          <div className="space-y-1 leading-none">
-                            <FormLabel>آدرس انبار</FormLabel>
-                            <FormDescription>
-                              در صورت انتخاب، این آدرس به عنوان آدرس انبار در نظر گرفته می‌شود.
-                            </FormDescription>
-                          </div>
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="isDefault"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 space-x-reverse">
-                          <FormControl>
-                            <Checkbox 
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                          <div className="space-y-1 leading-none">
-                            <FormLabel>آدرس پیش‌فرض</FormLabel>
-                            <FormDescription>
-                              در صورت انتخاب، این آدرس به عنوان آدرس پیش‌فرض در نظر گرفته می‌شود.
-                            </FormDescription>
-                          </div>
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                  <FormField
+                    control={form.control}
+                    name="postalCode"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>کد پستی</FormLabel>
+                        <FormControl>
+                          <Input placeholder="کد پستی ۱۰ رقمی" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="isWarehouse"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-start space-x-3 space-y-0 space-x-reverse">
+                        <FormControl>
+                          <Checkbox 
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                          <FormLabel>آدرس انبار</FormLabel>
+                          <FormDescription>
+                            در صورت انتخاب، این آدرس به عنوان آدرس انبار در نظر گرفته می‌شود.
+                          </FormDescription>
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="isDefault"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-start space-x-3 space-y-0 space-x-reverse">
+                        <FormControl>
+                          <Checkbox 
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                          <FormLabel>آدرس پیش‌فرض</FormLabel>
+                          <FormDescription>
+                            در صورت انتخاب، این آدرس به عنوان آدرس پیش‌فرض در نظر گرفته می‌شود.
+                          </FormDescription>
+                        </div>
+                      </FormItem>
+                    )}
+                  />
                   
                   <DialogFooter>
                     <Button type="button" variant="outline" onClick={() => setIsAddingAddress(false)}>انصراف</Button>
